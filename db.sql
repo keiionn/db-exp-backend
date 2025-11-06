@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS ForumUser (
 CREATE TABLE IF NOT EXISTS Community (
     community_id INT PRIMARY KEY,
     community_name VARCHAR(255) NOT NULL UNIQUE,
+    community_title TEXT DEFAULT NULL,
     community_description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ); -- Community CANNOT be deleted
