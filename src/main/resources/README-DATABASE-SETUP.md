@@ -40,11 +40,11 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 mvn spring-boot:run -Dspring-boot.run.profiles=prod
 
 # Using JAR
-java -jar target/db-experiment-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+java -jar target/db-experiment-1.0.0.jar --spring.profiles.active=prod
 
 # Using environment variable
 export SPRING_PROFILES_ACTIVE=prod
-java -jar target/db-experiment-0.0.1-SNAPSHOT.jar
+java -jar target/db-experiment-1.0.0.jar
 ```
 
 **What happens:**

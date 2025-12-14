@@ -1,0 +1,7 @@
+package com.dbexp.db_experiment.exception;
+
+public class UnauthorizedException extends RuntimeException {
+    public UnauthorizedException(String message) {
+        super(message);
+    }
+}

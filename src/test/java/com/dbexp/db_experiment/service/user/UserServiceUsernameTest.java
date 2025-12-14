@@ -1,4 +1,4 @@
-package com.dbexp.db_experiment.service;
+package com.dbexp.db_experiment.service.user;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +11,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.dbexp.db_experiment.dto.user.ChangeUsernameRequest;
 import com.dbexp.db_experiment.dto.user.ChangeUsernameResponse;
 import com.dbexp.db_experiment.entity.User;
+import com.dbexp.db_experiment.exception.ConflictException;
+import com.dbexp.db_experiment.exception.ResourceNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,7 +27,7 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("User Service - Username Change Tests")
-class UserServiceUsernameTest extends BaseServiceTest {
+class UserServiceUsernameTest extends BaseUserServiceTest {
 
     @BeforeEach
     void setUp() {
@@ -47,12 +49,13 @@ class UserServiceUsernameTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, oldUsername, "test@example.com", "hashedPassword");
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             mockUsernameExists(newUsername, false);
             when(userRepository.updateUsername(userId, newUsername)).thenReturn(1);
 
             // Act
-            ChangeUsernameResponse response = userService.changeUsername(userId, request);
+            ChangeUsernameResponse response = userService.changeUsername(session, userId, request);
 
             // Assert
             assertNotNull(response);
@@ -78,11 +81,12 @@ class UserServiceUsernameTest extends BaseServiceTest {
             Long userId = 999L;
             ChangeUsernameRequest request = new ChangeUsernameRequest("newuser");
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindByIdNotFound(userId);
 
             // Act & Assert
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changeUsername(userId, request);
+            ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+                userService.changeUsername(session, userId, request);
             });
 
             assertEquals("User not found", exception.getMessage());
@@ -103,12 +107,13 @@ class UserServiceUsernameTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, oldUsername, "test@example.com", "hashedPassword");
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             mockUsernameExists(newUsername, true);
 
             // Act & Assert
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changeUsername(userId, request);
+            ConflictException exception = assertThrows(ConflictException.class, () -> {
+                userService.changeUsername(session, userId, request);
             });
 
             assertEquals("Username already exists", exception.getMessage());
@@ -128,11 +133,12 @@ class UserServiceUsernameTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, currentUsername, "test@example.com", "hashedPassword");
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changeUsername(userId, request);
+                userService.changeUsername(session, userId, request);
             });
 
             assertEquals("New username must be different from current username", exception.getMessage());

@@ -2,12 +2,23 @@ package com.dbexp.db_experiment.dto.user;
 
 import java.time.LocalDateTime;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class ChangeEmailResponse {
 
+    @Schema(description = "Unique identifier of the user", example = "1")
     private Long userId;
+
+    @Schema(description = "Previous email address of the user", example = "john.doe@example.com")
     private String oldEmail;
+
+    @Schema(description = "New email address of the user", example = "jane.doe@example.com")
     private String newEmail;
+
+    @Schema(description = "Timestamp when the email was changed", example = "2025-11-25T14:30:00")
     private LocalDateTime updatedAt;
+
+    @Schema(description = "Success message", example = "Email changed successfully")
     private String message;
 
     // Constructors

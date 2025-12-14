@@ -1,4 +1,4 @@
-package com.dbexp.db_experiment.service;
+package com.dbexp.db_experiment.service.user;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.dbexp.db_experiment.dto.user.GetUserByIdRequest;
 import com.dbexp.db_experiment.dto.user.GetUserByIdResponse;
 import com.dbexp.db_experiment.entity.User;
+import com.dbexp.db_experiment.exception.ResourceNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,7 +22,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("User Service - Get By ID Tests")
-public class UserServiceGetByIdTest extends BaseServiceTest {
+public class UserServiceGetByIdTest extends BaseUserServiceTest {
     @BeforeEach
     void setUp() {
         super.setUp();
@@ -82,7 +83,7 @@ public class UserServiceGetByIdTest extends BaseServiceTest {
             mockUserRepositoryFindByIdNotFound(userId);
 
             // Act & Assert
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
                 userService.getUserById(request);
             });
 

@@ -2,10 +2,13 @@ package com.dbexp.db_experiment.service;
 
 import java.time.LocalDateTime;
 
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dbexp.db_experiment.dto.auth.CurrentUserResponse;
 import com.dbexp.db_experiment.dto.user.ChangeEmailRequest;
 import com.dbexp.db_experiment.dto.user.ChangeEmailResponse;
 import com.dbexp.db_experiment.dto.user.ChangePasswordRequest;
@@ -18,7 +21,13 @@ import com.dbexp.db_experiment.dto.user.DeleteAccountRequest;
 import com.dbexp.db_experiment.dto.user.DeleteAccountResponse;
 import com.dbexp.db_experiment.dto.user.GetUserByIdRequest;
 import com.dbexp.db_experiment.dto.user.GetUserByIdResponse;
+import com.dbexp.db_experiment.dto.user.GetUserByUsernameRequest;
+import com.dbexp.db_experiment.dto.user.GetUserByUsernameResponse;
 import com.dbexp.db_experiment.entity.User;
+import com.dbexp.db_experiment.exception.ConflictException;
+import com.dbexp.db_experiment.exception.ForbiddenException;
+import com.dbexp.db_experiment.exception.ResourceNotFoundException;
+import com.dbexp.db_experiment.exception.UnauthorizedException;
 import com.dbexp.db_experiment.repository.UserRepository;
 
 @Service
@@ -26,10 +35,12 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthService authService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authService = authService;
     }
 
     @Override
@@ -41,10 +52,29 @@ public class UserServiceImpl implements UserService {
 
         // Fetch user from database and validate existence
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Return response DTO
         return new GetUserByIdResponse(
+                user.getUserId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getCreatedAt());
+    }
+
+    @Override
+    public GetUserByUsernameResponse getUserByUsername(GetUserByUsernameRequest request) {
+        // Validate input parameters
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("Username is required");
+        }
+
+        // Fetch user from database and validate existence
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Return response DTO
+        return new GetUserByUsernameResponse(
                 user.getUserId(),
                 user.getUsername(),
                 user.getEmail(),
@@ -66,12 +96,12 @@ public class UserServiceImpl implements UserService {
 
         // Validate username uniqueness
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("Username already exists");
+            throw new ConflictException("Username already exists");
         }
 
         // Validate email uniqueness
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new ConflictException("Email already exists");
         }
 
         // Hash the password using Argon2
@@ -97,10 +127,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public ChangeUsernameResponse changeUsername(Long userId, ChangeUsernameRequest request) {
-        // Validate user exists
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    public ChangeUsernameResponse changeUsername(HttpSession session, Long userId, ChangeUsernameRequest request) {
+        // Validate session and get current user
+        CurrentUserResponse currentUserResponse = authService.getCurrentUser(session);
+        if (!currentUserResponse.authenticated()) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        User user = userRepository.findById(currentUserResponse.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Ensure user is modifying their own account
+        if (!user.getUserId().equals(userId)) {
+            throw new ForbiddenException("Cannot modify other user's account");
+        }
 
         // Validate new username is different from current
         if (user.getUsername().equals(request.getNewUsername())) {
@@ -109,7 +148,7 @@ public class UserServiceImpl implements UserService {
 
         // Validate new username uniqueness
         if (userRepository.existsByUsername(request.getNewUsername())) {
-            throw new IllegalArgumentException("Username already exists");
+            throw new ConflictException("Username already exists");
         }
 
         // Store old username for response
@@ -132,12 +171,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public ChangePasswordResponse changePassword(Long userId, ChangePasswordRequest request) {
-        // Validate user exists
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    public ChangePasswordResponse changePassword(HttpSession session, Long userId, ChangePasswordRequest request) {
+        // Validate session and get current user
+        CurrentUserResponse currentUserResponse = authService.getCurrentUser(session);
+        if (!currentUserResponse.authenticated()) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        User user = userRepository.findById(currentUserResponse.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Verify current password
+        // Ensure user is modifying their own account
+        if (!user.getUserId().equals(userId)) {
+            throw new ForbiddenException("Cannot modify other user's account");
+        }
+
+        // Verify current password matches
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Current password is incorrect");
         }
@@ -166,10 +214,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public ChangeEmailResponse changeEmail(Long userId, ChangeEmailRequest request) {
-        // Validate user exists
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    public ChangeEmailResponse changeEmail(HttpSession session, Long userId, ChangeEmailRequest request) {
+        // Validate session and get current user
+        CurrentUserResponse currentUserResponse = authService.getCurrentUser(session);
+        if (!currentUserResponse.authenticated()) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        User user = userRepository.findById(currentUserResponse.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Ensure user is modifying their own account
+        if (!user.getUserId().equals(userId)) {
+            throw new ForbiddenException("Cannot modify other user's account");
+        }
 
         // Verify current password
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
@@ -183,7 +240,7 @@ public class UserServiceImpl implements UserService {
 
         // Validate new email uniqueness
         if (userRepository.existsByEmail(request.getNewEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new ConflictException("Email already exists");
         }
 
         // Store old email for response
@@ -207,10 +264,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public DeleteAccountResponse deleteAccount(Long userId, DeleteAccountRequest request) {
-        // Validate user exists
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    public DeleteAccountResponse deleteAccount(HttpSession session, Long userId, DeleteAccountRequest request) {
+        // Validate session and get current user
+        CurrentUserResponse currentUserResponse = authService.getCurrentUser(session);
+        if (!currentUserResponse.authenticated()) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        User user = userRepository.findById(currentUserResponse.userId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Ensure user is modifying their own account
+        if (!user.getUserId().equals(userId)) {
+            throw new ForbiddenException("Cannot modify other user's account");
+        }
 
         // Verify current password
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {

@@ -1,4 +1,4 @@
-package com.dbexp.db_experiment.service;
+package com.dbexp.db_experiment.service.user;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +11,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.dbexp.db_experiment.dto.user.ChangeEmailRequest;
 import com.dbexp.db_experiment.dto.user.ChangeEmailResponse;
 import com.dbexp.db_experiment.entity.User;
+import com.dbexp.db_experiment.exception.ConflictException;
+import com.dbexp.db_experiment.exception.ResourceNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -22,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("User Service - Email Change Tests")
-class UserServiceEmailTest extends BaseServiceTest {
+class UserServiceEmailTest extends BaseUserServiceTest {
 
     @BeforeEach
     void setUp() {
@@ -44,6 +46,7 @@ class UserServiceEmailTest extends BaseServiceTest {
             String hashedPassword = "hashedPassword";
             ChangeEmailRequest request = new ChangeEmailRequest(currentPassword, newEmail);
 
+            mockAuthenticatedUser(userId);
             User existingUser = createMockUser(userId, "testuser", oldEmail, hashedPassword);
 
             mockUserRepositoryFindById(userId, existingUser);
@@ -52,7 +55,7 @@ class UserServiceEmailTest extends BaseServiceTest {
             when(userRepository.updateEmail(userId, newEmail)).thenReturn(1);
 
             // Act
-            ChangeEmailResponse response = userService.changeEmail(userId, request);
+            ChangeEmailResponse response = userService.changeEmail(session, userId, request);
 
             // Assert
             assertNotNull(response);
@@ -80,11 +83,12 @@ class UserServiceEmailTest extends BaseServiceTest {
             Long userId = 999L;
             ChangeEmailRequest request = new ChangeEmailRequest("currentPassword", "new@example.com");
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindByIdNotFound(userId);
 
             // Act & Assert
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changeEmail(userId, request);
+            ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+                userService.changeEmail(session, userId, request);
             });
 
             assertEquals("User not found", exception.getMessage());
@@ -107,12 +111,13 @@ class UserServiceEmailTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, "testuser", "old@example.com", hashedPassword);
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             mockPasswordEncoderMatches(currentPassword, hashedPassword, false);
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changeEmail(userId, request);
+                userService.changeEmail(session, userId, request);
             });
 
             assertEquals("Current password is incorrect", exception.getMessage());
@@ -136,12 +141,13 @@ class UserServiceEmailTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, "testuser", currentEmail, hashedPassword);
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             mockPasswordEncoderMatches(currentPassword, hashedPassword, true);
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changeEmail(userId, request);
+                userService.changeEmail(session, userId, request);
             });
 
             assertEquals("New email must be different from current email", exception.getMessage());
@@ -165,13 +171,14 @@ class UserServiceEmailTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, "testuser", currentEmail, hashedPassword);
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             mockPasswordEncoderMatches(currentPassword, hashedPassword, true);
             mockEmailExists(newEmail, true);
 
             // Act & Assert
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changeEmail(userId, request);
+            ConflictException exception = assertThrows(ConflictException.class, () -> {
+                userService.changeEmail(session, userId, request);
             });
 
             assertEquals("Email already exists", exception.getMessage());
@@ -200,6 +207,7 @@ class UserServiceEmailTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, "testuser", oldEmail, hashedPassword);
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             mockPasswordEncoderMatches(currentPassword, hashedPassword, true);
             mockEmailExists(newEmail, false);
@@ -207,7 +215,7 @@ class UserServiceEmailTest extends BaseServiceTest {
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changeEmail(userId, request);
+                userService.changeEmail(session, userId, request);
             });
 
             assertEquals("Failed to update email", exception.getMessage());

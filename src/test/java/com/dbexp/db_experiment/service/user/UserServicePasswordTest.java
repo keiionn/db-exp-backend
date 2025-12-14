@@ -1,4 +1,4 @@
-package com.dbexp.db_experiment.service;
+package com.dbexp.db_experiment.service.user;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.dbexp.db_experiment.dto.user.ChangePasswordRequest;
 import com.dbexp.db_experiment.dto.user.ChangePasswordResponse;
 import com.dbexp.db_experiment.entity.User;
+import com.dbexp.db_experiment.exception.ResourceNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("User Service - Password Change Tests")
-class UserServicePasswordTest extends BaseServiceTest {
+class UserServicePasswordTest extends BaseUserServiceTest {
 
     @BeforeEach
     void setUp() {
@@ -47,6 +48,7 @@ class UserServicePasswordTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, "testuser", "test@example.com", hashedCurrentPassword);
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             when(passwordEncoder.matches(currentPassword, hashedCurrentPassword)).thenReturn(true);
             when(passwordEncoder.matches(newPassword, hashedCurrentPassword)).thenReturn(false);
@@ -54,7 +56,7 @@ class UserServicePasswordTest extends BaseServiceTest {
             when(userRepository.updatePassword(userId, hashedNewPassword)).thenReturn(1);
 
             // Act
-            ChangePasswordResponse response = userService.changePassword(userId, request);
+            ChangePasswordResponse response = userService.changePassword(session, userId, request);
 
             // Assert
             assertNotNull(response);
@@ -81,11 +83,12 @@ class UserServicePasswordTest extends BaseServiceTest {
             Long userId = 999L;
             ChangePasswordRequest request = new ChangePasswordRequest("currentPassword", "newPassword");
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindByIdNotFound(userId);
 
             // Act & Assert
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changePassword(userId, request);
+            ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+                userService.changePassword(session, userId, request);
             });
 
             assertEquals("User not found", exception.getMessage());
@@ -108,12 +111,13 @@ class UserServicePasswordTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, "testuser", "test@example.com", hashedCurrentPassword);
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             mockPasswordEncoderMatches(currentPassword, hashedCurrentPassword, false);
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changePassword(userId, request);
+                userService.changePassword(session, userId, request);
             });
 
             assertEquals("Current password is incorrect", exception.getMessage());
@@ -136,13 +140,14 @@ class UserServicePasswordTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, "testuser", "test@example.com", hashedPassword);
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             mockPasswordEncoderMatches(currentPassword, hashedPassword, true);
             when(passwordEncoder.matches(newPassword, hashedPassword)).thenReturn(true);
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.changePassword(userId, request);
+                userService.changePassword(session, userId, request);
             });
 
             assertEquals("New password must be different from current password", exception.getMessage());
@@ -171,6 +176,7 @@ class UserServicePasswordTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, "testuser", "test@example.com", hashedCurrentPassword);
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             when(passwordEncoder.matches(currentPassword, hashedCurrentPassword)).thenReturn(true);
             when(passwordEncoder.matches(newPassword, hashedCurrentPassword)).thenReturn(false);
@@ -179,7 +185,7 @@ class UserServicePasswordTest extends BaseServiceTest {
 
             // Act & Assert
             IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
-                userService.changePassword(userId, request);
+                userService.changePassword(session, userId, request);
             });
 
             assertEquals("Failed to update password", exception.getMessage());

@@ -2,11 +2,20 @@ package com.dbexp.db_experiment.dto.user;
 
 import java.time.LocalDateTime;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class ChangeUsernameResponse {
 
+    @Schema(description = "Unique identifier of the user", example = "1")
     private Long userId;
+
+    @Schema(description = "Previous username of the user", example = "alice")
     private String oldUsername;
+
+    @Schema(description = "New username of the user", example = "jane_doe")
     private String newUsername;
+
+    @Schema(description = "Timestamp when the username was changed", example = "2025-11-25T14:30:00")
     private LocalDateTime updatedAt;
 
     // Constructors

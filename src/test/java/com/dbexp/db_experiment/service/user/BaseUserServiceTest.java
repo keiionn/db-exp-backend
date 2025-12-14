@@ -1,6 +1,8 @@
-package com.dbexp.db_experiment.service;
+package com.dbexp.db_experiment.service.user;
 
 import java.util.Optional;
+
+import jakarta.servlet.http.HttpSession;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -10,14 +12,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.dbexp.db_experiment.dto.auth.CurrentUserResponse;
 import com.dbexp.db_experiment.entity.User;
 import com.dbexp.db_experiment.repository.UserRepository;
+import com.dbexp.db_experiment.service.AuthService;
+import com.dbexp.db_experiment.service.UserServiceImpl;
 import com.dbexp.db_experiment.testutil.UserTestBuilder;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public abstract class BaseServiceTest {
+public abstract class BaseUserServiceTest {
 
     @Mock
     protected UserRepository userRepository;
@@ -27,9 +33,16 @@ public abstract class BaseServiceTest {
 
     protected UserServiceImpl userService;
 
+    @Mock
+    protected AuthService authService;
+
+    @Mock
+    protected HttpSession session;
+
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository, passwordEncoder);
+        userService = new UserServiceImpl(userRepository, passwordEncoder, authService);
+        session = mock(HttpSession.class);
     }
 
     protected User createMockUser(Long userId, String username, String email, String password) {
@@ -80,5 +93,10 @@ public abstract class BaseServiceTest {
 
     protected void mockUserDelete(Long userId, int affectedRows) {
         when(userRepository.deleteByUserId(userId)).thenReturn(affectedRows);
+    }
+
+    protected void mockAuthenticatedUser(Long userId) {
+        CurrentUserResponse response = new CurrentUserResponse(true, userId, "testuser", "test@example.com");
+        when(authService.getCurrentUser(session)).thenReturn(response);
     }
 }

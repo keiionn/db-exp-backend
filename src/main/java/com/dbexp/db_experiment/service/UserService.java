@@ -1,5 +1,7 @@
 package com.dbexp.db_experiment.service;
 
+import jakarta.servlet.http.HttpSession;
+
 import com.dbexp.db_experiment.dto.user.ChangeEmailRequest;
 import com.dbexp.db_experiment.dto.user.ChangeEmailResponse;
 import com.dbexp.db_experiment.dto.user.ChangePasswordRequest;
@@ -12,17 +14,21 @@ import com.dbexp.db_experiment.dto.user.DeleteAccountRequest;
 import com.dbexp.db_experiment.dto.user.DeleteAccountResponse;
 import com.dbexp.db_experiment.dto.user.GetUserByIdRequest;
 import com.dbexp.db_experiment.dto.user.GetUserByIdResponse;
+import com.dbexp.db_experiment.dto.user.GetUserByUsernameRequest;
+import com.dbexp.db_experiment.dto.user.GetUserByUsernameResponse;
 
 public interface UserService {
     GetUserByIdResponse getUserById(GetUserByIdRequest request);
 
+    GetUserByUsernameResponse getUserByUsername(GetUserByUsernameRequest request);
+
     CreateUserResponse createUser(CreateUserRequest request);
 
-    ChangeUsernameResponse changeUsername(Long userId, ChangeUsernameRequest request);
+    ChangeUsernameResponse changeUsername(HttpSession session, Long userId, ChangeUsernameRequest request);
 
-    ChangePasswordResponse changePassword(Long userId, ChangePasswordRequest request);
+    ChangePasswordResponse changePassword(HttpSession session, Long userId, ChangePasswordRequest request);
 
-    ChangeEmailResponse changeEmail(Long userId, ChangeEmailRequest request);
+    ChangeEmailResponse changeEmail(HttpSession session, Long userId, ChangeEmailRequest request);
 
-    DeleteAccountResponse deleteAccount(Long userId, DeleteAccountRequest request);
+    DeleteAccountResponse deleteAccount(HttpSession session, Long userId, DeleteAccountRequest request);
 }

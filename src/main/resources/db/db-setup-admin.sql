@@ -10,10 +10,10 @@
 CREATE DATABASE IF NOT EXISTS db_experiment;
 
 -- Create user if it doesn't exist
-CREATE USER IF NOT EXISTS 'dbexp'@'localhost' IDENTIFIED BY 'A1b212345';
+CREATE USER IF NOT EXISTS 'dbexp'@'%' IDENTIFIED BY 'A1b212345';
 
 -- Grant all privileges on the database to the user
-GRANT ALL PRIVILEGES ON db_experiment.* TO 'dbexp'@'localhost';
+GRANT ALL PRIVILEGES ON db_experiment.* TO 'dbexp'@'%';
 
 -- Apply privilege changes
 FLUSH PRIVILEGES;

@@ -37,7 +37,6 @@ CREATE TABLE ForumUser (
 CREATE TABLE Community (
     community_id INT PRIMARY KEY AUTO_INCREMENT,
     community_name VARCHAR(255) NOT NULL UNIQUE,
-    community_title TEXT DEFAULT NULL,
     community_description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -64,10 +63,12 @@ CREATE TABLE ForumComment (
     comment_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     post_id INT NOT NULL,
+    parent_comment_id INT,
     comment_content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES ForumUser(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
+    FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_comment_id) REFERENCES ForumComment(comment_id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_comment_user_id ON ForumComment(user_id);

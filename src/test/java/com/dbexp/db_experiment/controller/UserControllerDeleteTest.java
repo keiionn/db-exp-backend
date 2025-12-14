@@ -2,8 +2,11 @@ package com.dbexp.db_experiment.controller;
 
 import java.time.LocalDateTime;
 
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +37,9 @@ class UserControllerDeleteTest extends BaseControllerTest {
     @BeforeEach
     void setUp() {
         UserController userController = new UserController(userService);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(userController)
+                .addFilters(new CharacterEncodingFilter("UTF-8", true)) // Ensure proper encoding
+                .build();
     }
 
     @Nested
@@ -49,7 +54,8 @@ class UserControllerDeleteTest extends BaseControllerTest {
             DeleteAccountResponse response = new DeleteAccountResponse(userId, LocalDateTime.now(),
                     "Account deleted successfully");
 
-            when(userService.deleteAccount(eq(userId), any(DeleteAccountRequest.class))).thenReturn(response);
+            when(userService.deleteAccount(any(HttpSession.class), eq(userId), any(DeleteAccountRequest.class)))
+                    .thenReturn(response);
 
             performDeleteRequest("/api/users/{userId}", userId, request)
                     .andExpect(status().isOk())
@@ -83,7 +89,7 @@ class UserControllerDeleteTest extends BaseControllerTest {
             Long userId = 999L;
             DeleteAccountRequest request = new DeleteAccountRequest("currentPassword123");
 
-            when(userService.deleteAccount(eq(userId), any(DeleteAccountRequest.class)))
+            when(userService.deleteAccount(any(HttpSession.class), eq(userId), any(DeleteAccountRequest.class)))
                     .thenThrow(new IllegalArgumentException("User not found"));
 
             assertBadRequestWithMessage(performDeleteRequest("/api/users/{userId}", userId, request), "User not found");
@@ -95,7 +101,7 @@ class UserControllerDeleteTest extends BaseControllerTest {
             Long userId = 1L;
             DeleteAccountRequest request = new DeleteAccountRequest("wrongPassword");
 
-            when(userService.deleteAccount(eq(userId), any(DeleteAccountRequest.class)))
+            when(userService.deleteAccount(any(HttpSession.class), eq(userId), any(DeleteAccountRequest.class)))
                     .thenThrow(new IllegalArgumentException("Current password is incorrect"));
 
             assertBadRequestWithMessage(performDeleteRequest("/api/users/{userId}", userId, request),

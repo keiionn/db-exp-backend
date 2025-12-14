@@ -2,11 +2,20 @@ package com.dbexp.db_experiment.dto.user;
 
 import java.time.LocalDateTime;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class CreateUserResponse {
 
+    @Schema(description = "Unique identifier of the user", example = "1")
     private Long userId;
+
+    @Schema(description = "Username of the user", example = "alice")
     private String username;
+
+    @Schema(description = "Email address of the user", example = "john.doe@example.com")
     private String email;
+
+    @Schema(description = "Timestamp when the user account was created", example = "2025-11-25T14:30:00")
     private LocalDateTime createdAt;
 
     // Constructors

@@ -1,4 +1,4 @@
-package com.dbexp.db_experiment.service;
+package com.dbexp.db_experiment.service.user;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.dbexp.db_experiment.dto.user.DeleteAccountRequest;
 import com.dbexp.db_experiment.dto.user.DeleteAccountResponse;
 import com.dbexp.db_experiment.entity.User;
+import com.dbexp.db_experiment.exception.ResourceNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("User Service - Account Deletion Tests")
-class UserServiceDeleteTest extends BaseServiceTest {
+class UserServiceDeleteTest extends BaseUserServiceTest {
 
     @BeforeEach
     void setUp() {
@@ -44,12 +45,13 @@ class UserServiceDeleteTest extends BaseServiceTest {
 
             User existingUser = createMockUser(userId, "testuser", "test@example.com", hashedPassword);
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindById(userId, existingUser);
             mockPasswordEncoderMatches(password, hashedPassword, true);
             when(userRepository.deleteByUserId(userId)).thenReturn(1);
 
             // Act
-            DeleteAccountResponse response = userService.deleteAccount(userId, request);
+            DeleteAccountResponse response = userService.deleteAccount(session, userId, request);
 
             // Assert
             assertNotNull(response);
@@ -74,11 +76,12 @@ class UserServiceDeleteTest extends BaseServiceTest {
             Long userId = 999L;
             DeleteAccountRequest request = new DeleteAccountRequest("password123");
 
+            mockAuthenticatedUser(userId);
             mockUserRepositoryFindByIdNotFound(userId);
 
             // Act & Assert
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.deleteAccount(userId, request);
+            ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+                userService.deleteAccount(session, userId, request);
             });
 
             assertEquals("User not found", exception.getMessage());
@@ -97,6 +100,7 @@ class UserServiceDeleteTest extends BaseServiceTest {
             String hashedPassword = "hashedPassword";
             DeleteAccountRequest request = new DeleteAccountRequest(password);
 
+            mockAuthenticatedUser(userId);
             User existingUser = createMockUser(userId, "testuser", "test@example.com", hashedPassword);
 
             mockUserRepositoryFindById(userId, existingUser);
@@ -104,7 +108,7 @@ class UserServiceDeleteTest extends BaseServiceTest {
 
             // Act & Assert
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-                userService.deleteAccount(userId, request);
+                userService.deleteAccount(session, userId, request);
             });
 
             assertEquals("Current password is incorrect", exception.getMessage());
@@ -128,6 +132,7 @@ class UserServiceDeleteTest extends BaseServiceTest {
             String hashedPassword = "hashedPassword";
             DeleteAccountRequest request = new DeleteAccountRequest(password);
 
+            mockAuthenticatedUser(userId);
             User existingUser = createMockUser(userId, "testuser", "test@example.com", hashedPassword);
 
             mockUserRepositoryFindById(userId, existingUser);
@@ -136,7 +141,7 @@ class UserServiceDeleteTest extends BaseServiceTest {
 
             // Act & Assert
             IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
-                userService.deleteAccount(userId, request);
+                userService.deleteAccount(session, userId, request);
             });
 
             assertEquals("Failed to delete account", exception.getMessage());

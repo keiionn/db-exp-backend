@@ -23,13 +23,13 @@ INSERT INTO ForumUser (username, password_hash, email) VALUES
 -- ============================================
 -- Sample Communities
 -- ============================================
-INSERT INTO Community (community_name, community_title, community_description) VALUES
-('cscareerquestions', 'CS Career Questions', 'CSCareerQuestions is a community for those interested in computer science careers, job searching, interviews, and career development.'),
-('gamingcirclejerk', 'GamingCirclejerk', 'Welcome home, friend.'),
-('programmerhumor', 'Programmer Humor', 'For anything funny related to programming and software development.'),
-('science', 'Science & Research', 'Latest discoveries and scientific discussions'),
-('music', 'Music Lovers', 'Share and discuss all genres of music'),
-('asoiaf', 'A Song of Ice and Fire', 'News and discussions relating to George R.R. Martin''s "A Song of Ice and Fire" novels.');
+INSERT INTO Community (community_name, community_description) VALUES
+('cscareerquestions', 'CSCareerQuestions is a community for those interested in computer science careers, job searching, interviews, and career development.'),
+('gamingcirclejerk', 'Welcome home, friend.'),
+('programmerhumor', 'For anything funny related to programming and software development.'),
+('science', 'Latest discoveries and scientific discussions'),
+('music', 'Share and discuss all genres of music'),
+('asoiaf', 'News and discussions relating to George R.R. Martin''s "A Song of Ice and Fire" novels.');
 
 -- ============================================
 -- Sample Posts

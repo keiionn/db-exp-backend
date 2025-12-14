@@ -1,6 +1,4 @@
-package com.dbexp.db_experiment.service;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
+package com.dbexp.db_experiment.service.user;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -8,13 +6,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.dbexp.db_experiment.dto.user.CreateUserRequest;
 import com.dbexp.db_experiment.dto.user.CreateUserResponse;
 import com.dbexp.db_experiment.entity.User;
-import com.dbexp.db_experiment.repository.UserRepository;
+import com.dbexp.db_experiment.exception.ConflictException;
 import com.dbexp.db_experiment.testutil.UserTestBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,19 +25,11 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("User Service - Create User Tests")
-class UserServiceCreateTest {
-
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    private UserServiceImpl userService;
+class UserServiceCreateTest extends BaseUserServiceTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository, passwordEncoder);
+        super.setUp();
     }
 
     @Nested
@@ -95,7 +84,7 @@ class UserServiceCreateTest {
             when(userRepository.existsByUsername(request.getUsername())).thenReturn(true);
 
             // Act & Assert
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            ConflictException exception = assertThrows(ConflictException.class, () -> {
                 userService.createUser(request);
             });
 
@@ -117,7 +106,7 @@ class UserServiceCreateTest {
             when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
             // Act & Assert
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            ConflictException exception = assertThrows(ConflictException.class, () -> {
                 userService.createUser(request);
             });
 

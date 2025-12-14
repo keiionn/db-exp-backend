@@ -2,8 +2,11 @@ package com.dbexp.db_experiment.controller;
 
 import java.time.LocalDateTime;
 
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +37,9 @@ class UserControllerUsernameTest extends BaseControllerTest {
     @BeforeEach
     void setUp() {
         UserController userController = new UserController(userService);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(userController)
+                .addFilters(new CharacterEncodingFilter("UTF-8", true)) // Ensure proper encoding
+                .build();
     }
 
     @Nested
@@ -49,7 +54,8 @@ class UserControllerUsernameTest extends BaseControllerTest {
             ChangeUsernameResponse response = new ChangeUsernameResponse(userId, "oldusername", "newusername",
                     LocalDateTime.now());
 
-            when(userService.changeUsername(eq(userId), any(ChangeUsernameRequest.class))).thenReturn(response);
+            when(userService.changeUsername(any(HttpSession.class), eq(userId), any(ChangeUsernameRequest.class)))
+                    .thenReturn(response);
 
             performPutRequest("/api/users/{userId}/username", userId, request)
                     .andExpect(status().isOk())
@@ -112,7 +118,7 @@ class UserControllerUsernameTest extends BaseControllerTest {
             Long userId = 999L;
             ChangeUsernameRequest request = new ChangeUsernameRequest("newusername");
 
-            when(userService.changeUsername(eq(userId), any(ChangeUsernameRequest.class)))
+            when(userService.changeUsername(any(HttpSession.class), eq(userId), any(ChangeUsernameRequest.class)))
                     .thenThrow(new IllegalArgumentException("User not found"));
 
             assertBadRequestWithMessage(performPutRequest("/api/users/{userId}/username", userId, request),
@@ -125,7 +131,7 @@ class UserControllerUsernameTest extends BaseControllerTest {
             Long userId = 1L;
             ChangeUsernameRequest request = new ChangeUsernameRequest("existinguser");
 
-            when(userService.changeUsername(eq(userId), any(ChangeUsernameRequest.class)))
+            when(userService.changeUsername(any(HttpSession.class), eq(userId), any(ChangeUsernameRequest.class)))
                     .thenThrow(new IllegalArgumentException("Username already exists"));
 
             assertBadRequestWithMessage(performPutRequest("/api/users/{userId}/username", userId, request),
@@ -138,7 +144,7 @@ class UserControllerUsernameTest extends BaseControllerTest {
             Long userId = 1L;
             ChangeUsernameRequest request = new ChangeUsernameRequest("currentusername");
 
-            when(userService.changeUsername(eq(userId), any(ChangeUsernameRequest.class)))
+            when(userService.changeUsername(any(HttpSession.class), eq(userId), any(ChangeUsernameRequest.class)))
                     .thenThrow(new IllegalArgumentException("New username must be different from current username"));
 
             assertBadRequestWithMessage(performPutRequest("/api/users/{userId}/username", userId, request),

@@ -2,8 +2,11 @@ package com.dbexp.db_experiment.controller;
 
 import java.time.LocalDateTime;
 
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +37,9 @@ class UserControllerPasswordTest extends BaseControllerTest {
     @BeforeEach
     void setUp() {
         UserController userController = new UserController(userService);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(userController)
+                .addFilters(new CharacterEncodingFilter("UTF-8", true)) // Ensure proper encoding
+                .build();
     }
 
     @Nested
@@ -49,7 +54,8 @@ class UserControllerPasswordTest extends BaseControllerTest {
             ChangePasswordResponse response = new ChangePasswordResponse(userId, LocalDateTime.now(),
                     "Password updated successfully");
 
-            when(userService.changePassword(eq(userId), any(ChangePasswordRequest.class))).thenReturn(response);
+            when(userService.changePassword(any(HttpSession.class), eq(userId), any(ChangePasswordRequest.class)))
+                    .thenReturn(response);
 
             performPutRequest("/api/users/{userId}/password", userId, request)
                     .andExpect(status().isOk())
@@ -101,7 +107,7 @@ class UserControllerPasswordTest extends BaseControllerTest {
             Long userId = 999L;
             ChangePasswordRequest request = new ChangePasswordRequest("currentPassword", "newPassword123");
 
-            when(userService.changePassword(eq(userId), any(ChangePasswordRequest.class)))
+            when(userService.changePassword(any(HttpSession.class), eq(userId), any(ChangePasswordRequest.class)))
                     .thenThrow(new IllegalArgumentException("User not found"));
 
             assertBadRequestWithMessage(performPutRequest("/api/users/{userId}/password", userId, request),
@@ -114,7 +120,7 @@ class UserControllerPasswordTest extends BaseControllerTest {
             Long userId = 1L;
             ChangePasswordRequest request = new ChangePasswordRequest("wrongPassword", "newPassword123");
 
-            when(userService.changePassword(eq(userId), any(ChangePasswordRequest.class)))
+            when(userService.changePassword(any(HttpSession.class), eq(userId), any(ChangePasswordRequest.class)))
                     .thenThrow(new IllegalArgumentException("Current password is incorrect"));
 
             assertBadRequestWithMessage(performPutRequest("/api/users/{userId}/password", userId, request),
@@ -127,7 +133,7 @@ class UserControllerPasswordTest extends BaseControllerTest {
             Long userId = 1L;
             ChangePasswordRequest request = new ChangePasswordRequest("samePassword", "samePassword");
 
-            when(userService.changePassword(eq(userId), any(ChangePasswordRequest.class)))
+            when(userService.changePassword(any(HttpSession.class), eq(userId), any(ChangePasswordRequest.class)))
                     .thenThrow(new IllegalArgumentException("New password must be different from current password"));
 
             assertBadRequest(performPutRequest("/api/users/{userId}/password", userId, request));

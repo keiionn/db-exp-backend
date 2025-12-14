@@ -1,4 +1,4 @@
-package com.dbexp.db_experiment.service;
+package com.dbexp.db_experiment.service.auth;
 
 import java.util.Optional;
 
@@ -22,6 +22,7 @@ import com.dbexp.db_experiment.dto.auth.LoginResponse;
 import com.dbexp.db_experiment.dto.auth.LogoutResponse;
 import com.dbexp.db_experiment.entity.User;
 import com.dbexp.db_experiment.repository.UserRepository;
+import com.dbexp.db_experiment.service.AuthServiceImpl;
 import com.dbexp.db_experiment.testutil.UserTestBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

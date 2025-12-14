@@ -2,10 +2,17 @@ package com.dbexp.db_experiment.dto.user;
 
 import java.time.LocalDateTime;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class DeleteAccountResponse {
 
+    @Schema(description = "Unique identifier of the deleted user", example = "1")
     private Long userId;
+
+    @Schema(description = "Timestamp when the account was deleted", example = "2025-11-25T14:30:00")
     private LocalDateTime deletedAt;
+
+    @Schema(description = "Success message", example = "Account deleted successfully")
     private String message;
 
     // Constructors

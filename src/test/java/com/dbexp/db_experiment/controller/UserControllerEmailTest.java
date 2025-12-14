@@ -2,8 +2,11 @@ package com.dbexp.db_experiment.controller;
 
 import java.time.LocalDateTime;
 
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +37,9 @@ class UserControllerEmailTest extends BaseControllerTest {
     @BeforeEach
     void setUp() {
         UserController userController = new UserController(userService);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(userController)
+                .addFilters(new CharacterEncodingFilter("UTF-8", true)) // Ensure proper encoding
+                .build();
     }
 
     @Nested
@@ -49,7 +54,8 @@ class UserControllerEmailTest extends BaseControllerTest {
             ChangeEmailResponse response = new ChangeEmailResponse(userId, "old@example.com", "new@example.com",
                     LocalDateTime.now(), "Email changed successfully");
 
-            when(userService.changeEmail(eq(userId), any(ChangeEmailRequest.class))).thenReturn(response);
+            when(userService.changeEmail(any(HttpSession.class), eq(userId), any(ChangeEmailRequest.class)))
+                    .thenReturn(response);
 
             performPutRequest("/api/users/{userId}/email", userId, request)
                     .andExpect(status().isOk())
@@ -103,7 +109,7 @@ class UserControllerEmailTest extends BaseControllerTest {
             Long userId = 999L;
             ChangeEmailRequest request = new ChangeEmailRequest("currentPassword", "new@example.com");
 
-            when(userService.changeEmail(eq(userId), any(ChangeEmailRequest.class)))
+            when(userService.changeEmail(any(HttpSession.class), eq(userId), any(ChangeEmailRequest.class)))
                     .thenThrow(new IllegalArgumentException("User not found"));
 
             assertBadRequestWithMessage(performPutRequest("/api/users/{userId}/email", userId, request),
@@ -116,7 +122,7 @@ class UserControllerEmailTest extends BaseControllerTest {
             Long userId = 1L;
             ChangeEmailRequest request = new ChangeEmailRequest("wrongPassword", "new@example.com");
 
-            when(userService.changeEmail(eq(userId), any(ChangeEmailRequest.class)))
+            when(userService.changeEmail(any(HttpSession.class), eq(userId), any(ChangeEmailRequest.class)))
                     .thenThrow(new IllegalArgumentException("Current password is incorrect"));
 
             assertBadRequestWithMessage(performPutRequest("/api/users/{userId}/email", userId, request),
@@ -129,7 +135,7 @@ class UserControllerEmailTest extends BaseControllerTest {
             Long userId = 1L;
             ChangeEmailRequest request = new ChangeEmailRequest("currentPassword", "current@example.com");
 
-            when(userService.changeEmail(eq(userId), any(ChangeEmailRequest.class)))
+            when(userService.changeEmail(any(HttpSession.class), eq(userId), any(ChangeEmailRequest.class)))
                     .thenThrow(new IllegalArgumentException("New email must be different from current email"));
 
             assertBadRequestWithMessage(performPutRequest("/api/users/{userId}/email", userId, request),
@@ -142,7 +148,7 @@ class UserControllerEmailTest extends BaseControllerTest {
             Long userId = 1L;
             ChangeEmailRequest request = new ChangeEmailRequest("currentPassword", "existing@example.com");
 
-            when(userService.changeEmail(eq(userId), any(ChangeEmailRequest.class)))
+            when(userService.changeEmail(any(HttpSession.class), eq(userId), any(ChangeEmailRequest.class)))
                     .thenThrow(new IllegalArgumentException("Email already exists"));
 
             assertBadRequestWithMessage(performPutRequest("/api/users/{userId}/email", userId, request),
@@ -160,7 +166,7 @@ class UserControllerEmailTest extends BaseControllerTest {
             Long userId = 1L;
             ChangeEmailRequest request = new ChangeEmailRequest("currentPassword", "new@example.com");
 
-            when(userService.changeEmail(eq(userId), any(ChangeEmailRequest.class)))
+            when(userService.changeEmail(any(HttpSession.class), eq(userId), any(ChangeEmailRequest.class)))
                     .thenThrow(new RuntimeException("Unexpected error"));
 
             assertInternalServerError(performPutRequest("/api/users/{userId}/email", userId, request),
